@@ -29,7 +29,7 @@ public class ConversionTypes {
     String intNumberStr = Integer.toString(intNumber);
     System.out.println("int to String: " + intNumberStr);
 
-    intNumberStr = String.valueOf(intNumber+10);
+    intNumberStr = String.valueOf(intNumber + 10);
     System.out.println("int to String (valueOf): " + intNumberStr);
 
     double doubleNumber = 123.45;
@@ -38,5 +38,21 @@ public class ConversionTypes {
 
     doubleNumberStr = String.valueOf(doubleNumber);
     System.out.println("double to String (valueOf): " + doubleNumberStr);
+
+    System.out.println("\nConverting primitive types");
+    System.out.println("=========================");
+
+    int i = 22768;
+    short s = (short) i; // Explicit conversion
+    System.out.println("s = " + s);
+    long l = i; // Implicit conversion
+    System.out.println("l = " + l);
+    System.out.println("Short max value = " + Short.MAX_VALUE);
+    char b = (char) i; // Explicit conversion
+    System.out.println("b = " + b);
+    float f = i; // Implicit conversion
+    System.out.println("f = " + f);
+    double d = i; // Implicit conversion
+    System.out.println("d = " + d);
   }
 }
