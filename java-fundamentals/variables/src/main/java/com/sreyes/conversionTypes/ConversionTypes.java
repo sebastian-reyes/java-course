@@ -3,8 +3,10 @@ package com.sreyes.conversionTypes;
 public class ConversionTypes {
   public static void main(String[] args) {
     System.out.println("Conversion Types in Java");
-    System.out.println("=========================");
+    System.out.println("=========================\n");
 
+    System.out.println("Converting from String to int/double/boolean");
+    System.out.println("=========================");
     String numberStr = "12345";
     int numberInt = Integer.parseInt(numberStr);
     System.out.println("String to int: " + numberInt);
@@ -16,5 +18,25 @@ public class ConversionTypes {
     String logicStr = "true";
     boolean logicBool = Boolean.parseBoolean(logicStr);
     System.out.println("String to boolean: " + logicBool);
+    System.out.println("=========================\n");
+
+
+    System.out.println("Converting from int/double to String");
+    System.out.println("=========================");
+    int intNumber = 100;
+    System.out.println("intNumber: " + intNumber);
+
+    String intNumberStr = Integer.toString(intNumber);
+    System.out.println("int to String: " + intNumberStr);
+
+    intNumberStr = String.valueOf(intNumber+10);
+    System.out.println("int to String (valueOf): " + intNumberStr);
+
+    double doubleNumber = 123.45;
+    String doubleNumberStr = Double.toString(doubleNumber);
+    System.out.println("double to String: " + doubleNumberStr);
+
+    doubleNumberStr = String.valueOf(doubleNumber);
+    System.out.println("double to String (valueOf): " + doubleNumberStr);
   }
 }
