@@ -1,4 +1,4 @@
-package com.sreyes;
+package com.sreyes.primitives;
 
 public class BooleanPrimitive {
   public static void main(String[] args) {

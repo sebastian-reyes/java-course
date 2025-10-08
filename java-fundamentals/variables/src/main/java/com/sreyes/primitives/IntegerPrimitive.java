@@ -1,4 +1,4 @@
-package com.sreyes;
+package com.sreyes.primitives;
 
 public class IntegerPrimitive {
   public static void main(String[] args) {
