@@ -8,7 +8,6 @@ public class PipelineTopSelling {
 
   /**
    * return all names of videogames with have a sold > 80
-   *
   */
   public static Flux<String> getTopSellingGames() {
     return Database.getDataAsFlux()
