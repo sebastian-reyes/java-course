@@ -1,5 +1,6 @@
 package com.sreyes;
 
+import com.sreyes.pipelines.PipelineAllComments;
 import com.sreyes.pipelines.PipelineSumAllPricesInDiscount;
 import com.sreyes.pipelines.PipelineTopSelling;
 import lombok.extern.slf4j.Slf4j;
@@ -13,5 +14,8 @@ public class Main {
 
     PipelineSumAllPricesInDiscount.getAllPricesInDiscount()
         .subscribe(price -> log.info("Total price of discounted games: ${}", price));
+
+    PipelineAllComments.getAllReviewsComments()
+        .subscribe(comment -> log.info("Review comment: {}", comment));
   }
 }
