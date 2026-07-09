@@ -1,5 +1,6 @@
 package com.sreyes;
 
+import com.sreyes.callbacks.CallbacksExample;
 import com.sreyes.error.FallbackService;
 import com.sreyes.error.HandleDisabledVideogame;
 import com.sreyes.pipelines.PipelineAllComments;
@@ -11,13 +12,13 @@ import lombok.extern.slf4j.Slf4j;
 public class Main {
 
   static void main() {
+
     PipelineTopSelling.getTopSellingGames()
         .subscribe(System.out::println);
 
     PipelineSumAllPricesInDiscount.getAllPricesInDiscount()
         .subscribe(price -> log.info("Total price of discounted games: ${}", price));
 
-    
     PipelineAllComments.getAllReviewsComments()
         .subscribe(comment -> log.info("Review comment: {}", comment));
 
@@ -26,5 +27,12 @@ public class Main {
 
     FallbackService.callFallback()
         .subscribe(videogame -> log.info(videogame.toString()));
+
+    CallbacksExample.callbacks()
+        .subscribe(
+            data -> log.debug("[subscribe]: {}", data.getName()), //onNext
+            error -> log.error("[subscribe]: {}", error.getMessage()), //onError
+            () -> log.info("[subscribe]: Stream completed successfully") //onComplete
+        );
   }
 }
