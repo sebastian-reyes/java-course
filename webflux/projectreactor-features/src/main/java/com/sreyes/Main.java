@@ -1,5 +1,6 @@
 package com.sreyes;
 
+import com.sreyes.error.FallbackService;
 import com.sreyes.error.HandleDisabledVideogame;
 import com.sreyes.pipelines.PipelineAllComments;
 import com.sreyes.pipelines.PipelineSumAllPricesInDiscount;
@@ -16,10 +17,14 @@ public class Main {
     PipelineSumAllPricesInDiscount.getAllPricesInDiscount()
         .subscribe(price -> log.info("Total price of discounted games: ${}", price));
 
+    
     PipelineAllComments.getAllReviewsComments()
         .subscribe(comment -> log.info("Review comment: {}", comment));
 
     HandleDisabledVideogame.handleDisabledVideogame()
-        .subscribe(System.out::println);
+        .subscribe(videogame -> log.info(videogame.toString()));
+
+    FallbackService.callFallback()
+        .subscribe(videogame -> log.info(videogame.toString()));
   }
 }
