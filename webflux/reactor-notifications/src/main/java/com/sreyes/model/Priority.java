@@ -1,4 +1,4 @@
-package com.sreyes.models;
+package com.sreyes.model;
 
 public enum Priority {
   LOW, //Teams
