@@ -2,13 +2,19 @@ package com.sreyes;
 
 import com.sreyes.model.NotificationEvent;
 import com.sreyes.model.NotificationStatus;
+import com.sreyes.model.Priority;
 import com.sreyes.service.NotificationService;
 import com.sreyes.service.impl.EmailService;
 import com.sreyes.service.impl.PhoneService;
 import com.sreyes.service.impl.TeamsService;
+import com.sreyes.util.Constants;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -47,6 +53,61 @@ public class NotificationSystem {
     this.notificationCache = new ConcurrentHashMap<>();
   }
 
+  private void setUpProcessingFlows() {
+    this.mainEventSink
+        .asFlux()
+        .doOnNext(event -> {
+          log.info("Received notification event: {}", event);
+          updateEventStatus(event);
+          this.historySink.tryEmitNext(event);
+        })
+        .subscribe(this::routeEventByPriority);
+
+    this.setUpTeamsProcessor();
+    this.setUpEmailProcessor();
+    this.setUpPhoneProcessor();
+  }
+
+  private void setUpTeamsProcessor() {
+    this.teamsSink
+        .asMono()
+        .repeat()
+        .flatMap(notificationEvent ->
+            this.teamsService.sendNotification(notificationEvent).subscribeOn(Schedulers.boundedElastic())
+                .doOnSuccess(success -> updateSuccess(notificationEvent, Constants.TEAMS_CHANNEL))
+                .doOnError(error -> updateErrorStatus(notificationEvent, Constants.TEAMS_CHANNEL, error))
+                .onErrorResume(error -> Mono.just(false))
+        )
+        .subscribe();
+  }
+
+  private void setUpEmailProcessor() {
+    this.emailSink
+        .asMono()
+        .repeat()
+        .flatMap(notificationEvent ->
+            this.emailService.sendNotification(notificationEvent).subscribeOn(Schedulers.boundedElastic())
+                .doOnSuccess(success -> updateSuccess(notificationEvent, Constants.EMAIL_CHANNEL))
+                .doOnError(error -> updateErrorStatus(notificationEvent, Constants.EMAIL_CHANNEL, error))
+                .onErrorResume(error -> Mono.just(false))
+        )
+        .subscribe();
+  }
+
+  private void setUpPhoneProcessor() {
+    this.phoneSink
+        .asMono()
+        .repeat()
+        .flatMap(notificationEvent ->
+            this.phoneService.sendNotification(notificationEvent).subscribeOn(Schedulers.boundedElastic())
+                .doOnSuccess(success -> updateSuccess(notificationEvent, Constants.PHONE_CHANNEL))
+                .doOnError(error -> updateErrorStatus(notificationEvent, Constants.PHONE_CHANNEL, error))
+                .retry(3)
+                .onErrorResume(error -> Mono.just(false))
+        )
+        .subscribe();
+  }
+
   private void updateEventStatus(NotificationEvent notificationEvent) {
     if (Objects.isNull(notificationEvent.getStatus())) {
       notificationEvent.setId(UUID.randomUUID().toString());
@@ -78,5 +139,35 @@ public class NotificationSystem {
       cacheEvent.setStatus(NotificationStatus.DELIVERED);
       this.historySink.tryEmitNext(cacheEvent);
     }
+  }
+
+  private void routeEventByPriority(NotificationEvent notificationEvent) {
+    this.teamsSink.tryEmitValue(notificationEvent);
+
+    if (notificationEvent.getPriority() == Priority.HIGH || notificationEvent.getPriority() == Priority.MEDIUM) {
+      this.emailSink.tryEmitValue(notificationEvent);
+    }
+
+    if (notificationEvent.getPriority() == Priority.HIGH) {
+      this.phoneSink.tryEmitValue(notificationEvent);
+    }
+  }
+
+  private void publishEvent(NotificationEvent notificationEvent) {
+    this.mainEventSink.tryEmitNext(notificationEvent);
+  }
+
+  public Flux<NotificationEvent> getNotificationHistory() {
+    return this.historySink.asFlux();
+  }
+
+  public Mono<NotificationEvent> getNotificationById(String idNotification) {
+    return Mono.justOrEmpty(this.notificationCache.get(idNotification));
+  }
+
+  public Flux<NotificationEvent> retryFailedNotification() {
+    return Flux.fromIterable(this.notificationCache.values())
+        .filter(notificationEvent -> notificationEvent.getStatus() == NotificationStatus.FAILED)
+        .doOnNext(this::routeEventByPriority);
   }
 }
