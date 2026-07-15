@@ -53,6 +53,26 @@ public class NotificationSystem {
     this.notificationCache = new ConcurrentHashMap<>();
   }
 
+  public NotificationSystem(
+      NotificationService teamsService,
+      NotificationService emailService,
+      NotificationService phoneService) {
+    this.mainEventSink = Sinks.many().multicast().onBackpressureBuffer();
+    this.historySink = Sinks.many().replay().limit(50);
+
+    this.teamsSink = Sinks.one();
+    this.emailSink = Sinks.one();
+    this.phoneSink = Sinks.one();
+
+    this.teamsService = teamsService;
+    this.emailService = emailService;
+    this.phoneService = phoneService;
+
+    this.notificationCache = new ConcurrentHashMap<>();
+
+    setUpProcessingFlows();
+  }
+
   private void setUpProcessingFlows() {
     this.mainEventSink
         .asFlux()
@@ -71,7 +91,6 @@ public class NotificationSystem {
   private void setUpTeamsProcessor() {
     this.teamsSink
         .asMono()
-        .repeat()
         .flatMap(notificationEvent ->
             this.teamsService.sendNotification(notificationEvent).subscribeOn(Schedulers.boundedElastic())
                 .doOnSuccess(success -> updateSuccess(notificationEvent, Constants.TEAMS_CHANNEL))
@@ -84,7 +103,6 @@ public class NotificationSystem {
   private void setUpEmailProcessor() {
     this.emailSink
         .asMono()
-        .repeat()
         .flatMap(notificationEvent ->
             this.emailService.sendNotification(notificationEvent).subscribeOn(Schedulers.boundedElastic())
                 .doOnSuccess(success -> updateSuccess(notificationEvent, Constants.EMAIL_CHANNEL))
@@ -97,7 +115,6 @@ public class NotificationSystem {
   private void setUpPhoneProcessor() {
     this.phoneSink
         .asMono()
-        .repeat()
         .flatMap(notificationEvent ->
             this.phoneService.sendNotification(notificationEvent).subscribeOn(Schedulers.boundedElastic())
                 .doOnSuccess(success -> updateSuccess(notificationEvent, Constants.PHONE_CHANNEL))
@@ -153,7 +170,7 @@ public class NotificationSystem {
     }
   }
 
-  private void publishEvent(NotificationEvent notificationEvent) {
+  public void publishEvent(NotificationEvent notificationEvent) {
     this.mainEventSink.tryEmitNext(notificationEvent);
   }
 
